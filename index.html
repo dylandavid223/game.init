@@ -94,6 +94,64 @@
             display: none;
         }
         
+        /* Top Bar */
+        #topBar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: all;
+        }
+        
+        .player-info {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 12px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .player-stats {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--light);
+        }
+        
         /* Speedometer */
         #speedometer {
             position: absolute;
@@ -134,6 +192,84 @@
             margin-bottom: 10px;
         }
         
+        /* AI Status Panel */
+        #aiStatusPanel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            min-width: 200px;
+            pointer-events: all;
+        }
+        
+        .ai-status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .ai-status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .ai-status-label {
+            color: var(--gray);
+        }
+        
+        .ai-status-value {
+            color: var(--light);
+            font-weight: 600;
+        }
+        
+        /* Python Backend Status */
+        #backendStatus {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            pointer-events: all;
+        }
+        
+        .backend-status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+        
+        .status-indicator.connected {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
         /* Car Selection Screen */
         #carSelection {
             position: absolute;
@@ -159,7 +295,7 @@
             font-size: 48px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            --webkit-background-clip: text;
+            -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
         }
@@ -260,58 +396,10 @@
             box-shadow: 0 10px 20px rgba(76, 201, 240, 0.3);
         }
         
-        /* Pause Menu */
-        #pauseMenu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .pause-title {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--light);
-            margin-bottom: 40px;
-        }
-        
-        .menu-options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 300px;
-        }
-        
-        .menu-option {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--light);
-            border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        
-        .menu-option:hover {
-            background: rgba(76, 201, 240, 0.3);
-            transform: translateY(-2px);
-        }
-        
         /* Controls */
         #controlsPanel {
             position: absolute;
-            bottom: 20px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -348,6 +436,50 @@
             height: 100%;
         }
         
+        /* Python Output Display */
+        #pythonOutput {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            border: 1px solid #00ff00;
+            display: none;
+        }
+        
+        /* Notification */
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            animation: notificationFade 3s ease forwards;
+        }
+        
+        @keyframes notificationFade {
+            0% { opacity: 0; transform: translate(-50%, -40%); }
+            15% { opacity: 1; transform: translate(-50%, -50%); }
+            85% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -60%); }
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .car-grid {
@@ -368,31 +500,22 @@
             .speed-value {
                 font-size: 48px;
             }
-        }
-        
-        @media (max-width: 480px) {
-            .selection-title {
-                font-size: 28px;
-            }
             
-            .selection-subtitle {
-                font-size: 16px;
-            }
-            
-            .car-card {
-                padding: 20px;
+            #aiStatusPanel, #backendStatus {
+                display: none;
             }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
 </head>
 <body>
     <div id="gameContainer">
         <div id="loadingScreen">
             <div class="loader"></div>
             <h2 style="margin-bottom: 10px; color: var(--primary);">HORIZON BROWSER</h2>
-            <p style="color: var(--gray); margin-bottom: 20px;">Loading Mexico...</p>
+            <p style="color: var(--gray); margin-bottom: 20px;">Connecting to Python Backend...</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="loadingProgress"></div>
             </div>
@@ -402,7 +525,7 @@
         <div id="carSelection">
             <div class="selection-header">
                 <h1 class="selection-title">CHOOSE YOUR HORIZON STARTER</h1>
-                <p class="selection-subtitle">Select your vehicle and begin your Mexican adventure</p>
+                <p class="selection-subtitle">AI-Powered Racing with Python Backend</p>
             </div>
             
             <div class="car-grid">
@@ -423,7 +546,7 @@
                             <div class="spec-label">Power</div>
                         </div>
                     </div>
-                    <p class="car-description">Perfect balance of speed and control for road racing. Excellent handling on asphalt.</p>
+                    <p class="car-description">AI-optimized racing line, perfect for asphalt circuits with machine learning path prediction.</p>
                     <button class="select-button" onclick="selectCar('street')">SELECT</button>
                 </div>
                 
@@ -444,7 +567,7 @@
                             <div class="spec-label">Power</div>
                         </div>
                     </div>
-                    <p class="car-description">Conquer any terrain. Advanced suspension and all-wheel drive for off-road mastery.</p>
+                    <p class="car-description">Python terrain analysis, adaptive suspension AI, and neural network-based obstacle avoidance.</p>
                     <button class="select-button" onclick="selectCar('offroad')">SELECT</button>
                 </div>
                 
@@ -465,19 +588,23 @@
                             <div class="spec-label">Power</div>
                         </div>
                     </div>
-                    <p class="car-description">Ultimate speed machine. Aerodynamic design and brutal acceleration for pure speed.</p>
+                    <p class="car-description">Deep reinforcement learning for optimal racing, computer vision for track analysis.</p>
                     <button class="select-button" onclick="selectCar('hyper')">SELECT</button>
                 </div>
             </div>
             
             <div style="display: flex; gap: 15px; margin-top: 20px;">
-                <div class="control-button" onclick="toggleDifficulty()">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>DIFFICULTY: <span id="difficultyText">NORMAL</span></span>
+                <div class="control-button" onclick="toggleAIMode()">
+                    <i class="fas fa-robot"></i>
+                    <span>AI MODE: <span id="aiModeText">ASSISTED</span></span>
                 </div>
-                <div class="control-button" onclick="toggleAssists()">
-                    <i class="fas fa-car-crash"></i>
-                    <span>ASSISTS: <span id="assistsText">ON</span></span>
+                <div class="control-button" onclick="togglePythonBackend()">
+                    <i class="fab fa-python"></i>
+                    <span>BACKEND: <span id="backendStatusText">CONNECTING</span></span>
+                </div>
+                <div class="control-button" onclick="showPythonOutput()">
+                    <i class="fas fa-terminal"></i>
+                    <span>PYTHON LOGS</span>
                 </div>
             </div>
         </div>
@@ -485,6 +612,32 @@
         <canvas id="gameCanvas"></canvas>
         
         <div id="gameUI">
+            <!-- Top Bar -->
+            <div id="topBar">
+                <div class="player-info">
+                    <div class="player-avatar">H</div>
+                    <div class="player-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">LEVEL</div>
+                            <div class="stat-value" id="playerLevel">1</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">AI SCORE</div>
+                            <div class="stat-value" id="aiScore">85%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">FPS</div>
+                            <div class="stat-value" id="fpsCounter">60</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-button" onclick="togglePause()">
+                    <i class="fas fa-pause"></i>
+                    <span>PAUSE</span>
+                </div>
+            </div>
+            
             <!-- Speedometer -->
             <div id="speedometer">
                 <div class="speed-display">
@@ -492,6 +645,53 @@
                     <span class="speed-unit">km/h</span>
                 </div>
                 <div class="gear-display" id="currentGear">N</div>
+                <div style="font-size: 12px; color: var(--gray); text-align: center;">
+                    AI: <span id="aiControlStatus">ACTIVE</span>
+                </div>
+            </div>
+            
+            <!-- AI Status Panel -->
+            <div id="aiStatusPanel">
+                <div class="ai-status-header">
+                    <i class="fas fa-brain"></i>
+                    <span>PYTHON AI ENGINE</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Processing:</span>
+                    <span class="ai-status-value" id="aiProcessingTime">0ms</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Path Nodes:</span>
+                    <span class="ai-status-value" id="aiPathNodes">0</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Optimization:</span>
+                    <span class="ai-status-value" id="aiOptimization">0%</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Neural Net:</span>
+                    <span class="ai-status-value" id="aiNeuralNet">ONLINE</span>
+                </div>
+            </div>
+            
+            <!-- Python Backend Status -->
+            <div id="backendStatus">
+                <div class="backend-status-header">
+                    <div class="status-indicator" id="backendStatusIndicator"></div>
+                    <span>PYTHON BACKEND</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Connection:</span>
+                    <span class="ai-status-value" id="backendConnection">DISCONNECTED</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Uptime:</span>
+                    <span class="ai-status-value" id="backendUptime">0s</span>
+                </div>
+                <div class="ai-status-item">
+                    <span class="ai-status-label">Requests:</span>
+                    <span class="ai-status-value" id="backendRequests">0</span>
+                </div>
             </div>
             
             <!-- Controls -->
@@ -500,24 +700,18 @@
                     <i class="fas fa-camera"></i>
                     <span>CAMERA</span>
                 </div>
-                <div class="control-button" onclick="togglePause()">
-                    <i class="fas fa-pause"></i>
-                    <span>PAUSE</span>
+                <div class="control-button" onclick="toggleAIAssist()">
+                    <i class="fas fa-robot"></i>
+                    <span>AI ASSIST</span>
+                </div>
+                <div class="control-button" onclick="requestAIOptimization()">
+                    <i class="fas fa-magic"></i>
+                    <span>AI OPTIMIZE</span>
                 </div>
             </div>
-        </div>
-        
-        <!-- Pause Menu -->
-        <div id="pauseMenu">
-            <h2 class="pause-title">PAUSED</h2>
-            <div class="menu-options">
-                <div class="menu-option" onclick="togglePause()">RESUME</div>
-                <div class="menu-option" onclick="changeCar()">CHANGE CAR</div>
-                <div class="menu-option" onclick="quitToMenu()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    QUIT TO MENU
-                </div>
-            </div>
+            
+            <!-- Python Output -->
+            <div id="pythonOutput"></div>
         </div>
     </div>
 
@@ -530,53 +724,96 @@
         let terrain = null;
         let keys = {};
         let gameRunning = true;
-        let cameraMode = 0; // 0: chase, 1: hood, 2: orbit
+        let cameraMode = 0;
+        let socket = null;
+        let pythonBackendConnected = false;
+        let aiMode = 'assisted';
+        let lastAIPrediction = null;
+        let aiPathPoints = [];
+        let frameCount = 0;
+        let lastFpsUpdate = Date.now();
         
         const carTypes = {
-            street: { color: 0x3498db, speed: 0.5, turn: 0.05 },
-            offroad: { color: 0xe74c3c, speed: 0.3, turn: 0.03 },
-            hyper: { color: 0xf1c40f, speed: 0.8, turn: 0.07 }
+            street: { color: 0x3498db, speed: 0.5, turn: 0.05, aiProfile: 'aggressive' },
+            offroad: { color: 0xe74c3c, speed: 0.3, turn: 0.03, aiProfile: 'cautious' },
+            hyper: { color: 0xf1c40f, speed: 0.8, turn: 0.07, aiProfile: 'precision' }
         };
         
         const gameState = {
             speed: 0,
             gear: 'N',
-            selectedCar: null
+            selectedCar: null,
+            playerPosition: { x: 0, y: 0, z: 0 },
+            aiData: {
+                processingTime: 0,
+                pathNodes: 0,
+                optimization: 0,
+                neuralNetStatus: 'loading'
+            },
+            pythonBackend: {
+                connected: false,
+                uptime: 0,
+                requests: 0
+            }
         };
 
         // ============================
         // INITIALIZATION
         // ============================
         function initializeGame() {
-            // Simulate loading
-            let progress = 0;
-            const loadingInterval = setInterval(() => {
-                progress += 10;
-                document.getElementById('loadingProgress').style.width = `${progress}%`;
-                document.getElementById('loadingText').textContent = 
-                    `Loading... ${progress}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(loadingInterval);
-                    document.getElementById('loadingScreen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('carSelection').style.display = 'flex';
-                    }, 500);
-                }
-            }, 300);
+            // Start loading animation
+            simulateLoading();
             
             // Setup Three.js
             setupThreeJS();
             
+            // Connect to Python backend
+            connectToPythonBackend();
+            
             // Setup event listeners
             setupEventListeners();
+            
+            // Start game loop
+            animate();
+        }
+
+        function simulateLoading() {
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                document.getElementById('loadingProgress').style.width = `${progress}%`;
+                
+                const messages = [
+                    "Initializing Python AI Engine...",
+                    "Loading Neural Networks...",
+                    "Connecting to TensorFlow Backend...",
+                    "Setting up Computer Vision...",
+                    "Optimizing Racing Algorithms...",
+                    "Almost ready..."
+                ];
+                
+                const messageIndex = Math.floor(progress / (100 / messages.length));
+                document.getElementById('loadingText').textContent = messages[Math.min(messageIndex, messages.length - 1)];
+                
+                if (progress >= 100) {
+                    clearInterval(loadingInterval);
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loadingScreen').style.display = 'none';
+                            document.getElementById('carSelection').style.display = 'flex';
+                        }, 500);
+                    }, 500);
+                }
+            }, 300);
         }
 
         function setupThreeJS() {
             // Scene
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 100, 1000);
             
             // Camera
             camera = new THREE.PerspectiveCamera(
@@ -585,16 +822,18 @@
                 0.1,
                 1000
             );
-            camera.position.set(0, 10, 20);
+            camera.position.set(0, 15, 25);
             
             // Renderer
             renderer = new THREE.WebGLRenderer({
                 canvas: document.getElementById('gameCanvas'),
-                antialias: true
+                antialias: true,
+                alpha: true
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setClearColor(0x87CEEB, 1);
             
             // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -603,17 +842,16 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(100, 100, 50);
             directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
             
-            // Create terrain
-            createTerrain();
-            
-            // Start game loop
-            animate();
+            // Create track and environment
+            createTrack();
         }
 
-        function createTerrain() {
-            // Simple ground plane
+        function createTrack() {
+            // Create ground
             const groundGeometry = new THREE.PlaneGeometry(200, 200, 32);
             const groundMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x3d9970,
@@ -626,36 +864,62 @@
             terrain.receiveShadow = true;
             scene.add(terrain);
             
-            // Add some hills
-            for (let i = 0; i < 20; i++) {
-                const hillGeometry = new THREE.ConeGeometry(
-                    Math.random() * 10 + 5,
-                    Math.random() * 20 + 10,
-                    8
-                );
-                const hillMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x7CFC00,
-                    roughness: 0.9
-                });
-                
-                const hill = new THREE.Mesh(hillGeometry, hillMaterial);
-                hill.position.set(
-                    (Math.random() - 0.5) * 150,
-                    0,
-                    (Math.random() - 0.5) * 150
-                );
-                hill.castShadow = true;
-                hill.receiveShadow = true;
-                scene.add(hill);
+            // Create track
+            createRoad();
+            
+            // Create environment with AI path points
+            createEnvironment();
+        }
+
+        function createRoad() {
+            // Main road
+            const roadGeometry = new THREE.PlaneGeometry(180, 15, 32);
+            const roadMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x333333,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            
+            const road = new THREE.Mesh(roadGeometry, roadMaterial);
+            road.rotation.x = -Math.PI / 2;
+            road.position.y = 0.01;
+            road.receiveShadow = true;
+            scene.add(road);
+            
+            // Road markings
+            const markingGeometry = new THREE.PlaneGeometry(2, 0.3);
+            const markingMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            for (let i = -90; i < 90; i += 10) {
+                const marking = new THREE.Mesh(markingGeometry, markingMaterial);
+                marking.rotation.x = -Math.PI / 2;
+                marking.position.set(i, 0.02, 0);
+                scene.add(marking);
             }
             
-            // Add some trees
+            // Create AI path visualization points
+            for (let i = -80; i < 80; i += 20) {
+                const pointGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+                const pointMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x4cc9f0,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const point = new THREE.Mesh(pointGeometry, pointMaterial);
+                point.position.set(i, 1, 0);
+                scene.add(point);
+                aiPathPoints.push(point);
+            }
+        }
+
+        function createEnvironment() {
+            // Trees
             for (let i = 0; i < 50; i++) {
                 const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.7, 5, 8);
                 const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
                 const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
                 
-                const leavesGeometry = new THREE.SphereGeometry(3, 8, 8);
+                const leavesGeometry = new THREE.ConeGeometry(3, 8, 8);
                 const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
                 const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
                 leaves.position.y = 4;
@@ -664,20 +928,41 @@
                 tree.add(trunk);
                 tree.add(leaves);
                 
+                const angle = (i / 50) * Math.PI * 2;
+                const radius = 85 + Math.random() * 15;
                 tree.position.set(
-                    (Math.random() - 0.5) * 180,
+                    Math.cos(angle) * radius,
                     2.5,
-                    (Math.random() - 0.5) * 180
+                    Math.sin(angle) * radius
                 );
                 tree.castShadow = true;
-                tree.receiveShadow = true;
                 scene.add(tree);
+            }
+            
+            // Buildings (AI waypoints)
+            for (let i = 0; i < 8; i++) {
+                const buildingGeometry = new THREE.BoxGeometry(10, 15 + Math.random() * 20, 10);
+                const buildingMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x95a5a6,
+                    roughness: 0.7
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                
+                const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+                const radius = 60;
+                building.position.set(
+                    Math.cos(angle) * radius,
+                    7.5,
+                    Math.sin(angle) * radius
+                );
+                building.castShadow = true;
+                scene.add(building);
             }
         }
 
         function createCar(type) {
             if (car) {
-                scene.remove(car);
+                scene.remove(car.group);
             }
             
             const carGroup = new THREE.Group();
@@ -730,6 +1015,17 @@
                 carGroup.add(wheel);
             });
             
+            // AI visualization
+            const aiSensorGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+            const aiSensorMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.7
+            });
+            const aiSensor = new THREE.Mesh(aiSensorGeometry, aiSensorMaterial);
+            aiSensor.position.set(0, 2, 3);
+            carGroup.add(aiSensor);
+            
             carGroup.position.y = 2;
             carGroup.castShadow = true;
             scene.add(carGroup);
@@ -739,8 +1035,146 @@
                 type: type,
                 speed: 0,
                 rotation: 0,
-                velocity: new THREE.Vector3(0, 0, 0)
+                velocity: new THREE.Vector3(0, 0, 0),
+                aiSensor: aiSensor
             };
+        }
+
+        function connectToPythonBackend() {
+            // Connect via WebSocket to Python backend
+            const backendUrl = window.location.hostname === 'localhost' ? 
+                'http://localhost:5000' : window.location.origin;
+            
+            socket = io(backendUrl, {
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            });
+            
+            socket.on('connect', () => {
+                console.log('Connected to Python backend');
+                pythonBackendConnected = true;
+                updateBackendStatus('connected');
+                showNotification('Python Backend Connected!', 2000);
+                
+                // Request initial AI analysis
+                socket.emit('ai_analysis', {
+                    type: 'initial',
+                    carType: gameState.selectedCar
+                });
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('Disconnected from Python backend');
+                pythonBackendConnected = false;
+                updateBackendStatus('disconnected');
+            });
+            
+            socket.on('ai_response', (data) => {
+                handleAIResponse(data);
+            });
+            
+            socket.on('python_output', (data) => {
+                addPythonOutput(data.output);
+            });
+            
+            socket.on('graphics_update', (data) => {
+                handleGraphicsUpdate(data);
+            });
+            
+            socket.on('error', (error) => {
+                console.error('Backend error:', error);
+                addPythonOutput(`ERROR: ${error.message}`);
+            });
+        }
+
+        function handleAIResponse(data) {
+            gameState.aiData.processingTime = data.processing_time || 0;
+            gameState.aiData.pathNodes = data.path_nodes || 0;
+            gameState.aiData.optimization = data.optimization || 0;
+            gameState.aiData.neuralNetStatus = data.neural_net_status || 'online';
+            
+            lastAIPrediction = data.prediction;
+            
+            // Update AI path visualization
+            if (data.path_points && car) {
+                updateAIPathVisualization(data.path_points);
+            }
+            
+            // Update UI
+            updateAIStatusUI();
+            
+            // Apply AI suggestions if in AI mode
+            if (aiMode === 'assisted' || aiMode === 'full') {
+                applyAISuggestions(data.suggestions);
+            }
+        }
+
+        function handleGraphicsUpdate(data) {
+            // Update environment based on Python graphics processing
+            if (data.weather_effects) {
+                updateWeatherEffects(data.weather_effects);
+            }
+            
+            if (data.light_optimization) {
+                optimizeLighting(data.light_optimization);
+            }
+            
+            if (data.shadow_quality) {
+                updateShadowQuality(data.shadow_quality);
+            }
+        }
+
+        function updateAIPathVisualization(pathPoints) {
+            // Update AI path points visualization
+            aiPathPoints.forEach((point, index) => {
+                if (pathPoints[index]) {
+                    point.position.set(
+                        pathPoints[index].x,
+                        point.position.y,
+                        pathPoints[index].z
+                    );
+                    point.material.opacity = 0.7;
+                }
+            });
+        }
+
+        function applyAISuggestions(suggestions) {
+            if (!suggestions || !car) return;
+            
+            // Apply AI steering suggestions
+            if (suggestions.steering_correction) {
+                const correction = suggestions.steering_correction;
+                car.rotation += correction * 0.01;
+            }
+            
+            // Apply AI speed suggestions
+            if (suggestions.speed_adjustment && aiMode === 'full') {
+                const adjustment = suggestions.speed_adjustment;
+                car.speed *= (1 + adjustment * 0.1);
+            }
+            
+            // Visualize AI sensor
+            if (car.aiSensor) {
+                car.aiSensor.material.color.setHex(
+                    suggestions.optimal_path ? 0x00ff00 : 0xff0000
+                );
+            }
+        }
+
+        function updateWeatherEffects(weather) {
+            // Update scene based on weather effects from Python
+            if (weather.fog_density !== undefined) {
+                scene.fog.density = weather.fog_density;
+            }
+            
+            if (weather.light_intensity !== undefined) {
+                scene.children.forEach(child => {
+                    if (child.isLight) {
+                        child.intensity = weather.light_intensity;
+                    }
+                });
+            }
         }
 
         function setupEventListeners() {
@@ -750,6 +1184,8 @@
                 
                 if (e.key === 'Escape') togglePause();
                 if (e.key === 'c' || e.key === 'C') toggleCamera();
+                if (e.key === 'p' || e.key === 'P') togglePythonOutput();
+                if (e.key === 'a' || e.key === 'A') toggleAIAssist();
             });
             
             window.addEventListener('keyup', (e) => {
@@ -767,6 +1203,12 @@
             document.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
             });
+            
+            // Gamepad support
+            window.addEventListener('gamepadconnected', (e) => {
+                console.log('Gamepad connected:', e.gamepad.id);
+                showNotification('Gamepad Connected!', 1500);
+            });
         }
 
         // ============================
@@ -777,15 +1219,40 @@
             
             if (!gameRunning) return;
             
+            // Update FPS counter
+            updateFPSCounter();
+            
             // Update car movement
             if (car) {
                 updateCar();
                 updateCamera();
                 updateUI();
+                
+                // Send data to Python backend for AI processing
+                sendDataToPythonBackend();
+            }
+            
+            // Update backend uptime
+            if (pythonBackendConnected) {
+                gameState.pythonBackend.uptime += 0.016; // Approximate
+                updateBackendUI();
             }
             
             // Render scene
             renderer.render(scene, camera);
+        }
+
+        function updateFPSCounter() {
+            frameCount++;
+            const now = Date.now();
+            const delta = now - lastFpsUpdate;
+            
+            if (delta >= 1000) {
+                const fps = Math.round((frameCount * 1000) / delta);
+                document.getElementById('fpsCounter').textContent = fps;
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
         }
 
         function updateCar() {
@@ -793,23 +1260,35 @@
             const forward = new THREE.Vector3(0, 0, -1);
             forward.applyQuaternion(car.group.quaternion);
             
-            // Steering
-            if (keys['a'] || keys['arrowleft']) {
-                car.rotation += carType.turn;
-            }
-            if (keys['d'] || keys['arrowright']) {
-                car.rotation -= carType.turn;
+            // User input
+            let userSteering = 0;
+            if (keys['a'] || keys['arrowleft']) userSteering += carType.turn;
+            if (keys['d'] || keys['arrowright']) userSteering -= carType.turn;
+            
+            // AI override in full mode
+            if (aiMode === 'full' && lastAIPrediction) {
+                userSteering = lastAIPrediction.steering || userSteering;
             }
             
+            car.rotation += userSteering;
+            
             // Acceleration/Braking
+            let acceleration = 0;
             if (keys['w'] || keys['arrowup']) {
-                car.speed += carType.speed * 0.1;
+                acceleration = carType.speed * 0.1;
             } else if (keys['s'] || keys['arrowdown']) {
-                car.speed -= carType.speed * 0.2;
-            } else {
-                // Natural deceleration
-                car.speed *= 0.95;
+                acceleration = -carType.speed * 0.2;
             }
+            
+            // AI speed control in full mode
+            if (aiMode === 'full' && lastAIPrediction && lastAIPrediction.speed_adjustment) {
+                acceleration *= (1 + lastAIPrediction.speed_adjustment);
+            }
+            
+            car.speed += acceleration;
+            
+            // Natural deceleration
+            car.speed *= 0.98;
             
             // Clamp speed
             const maxSpeed = carType.speed * 100;
@@ -824,7 +1303,15 @@
             // Keep car on terrain
             car.group.position.y = 2;
             
-            // Update gear display
+            // Update game state
+            gameState.speed = Math.abs(car.speed * 20);
+            gameState.playerPosition = {
+                x: car.group.position.x,
+                y: car.group.position.y,
+                z: car.group.position.z
+            };
+            
+            // Update gear
             if (car.speed > 0.1) {
                 gameState.gear = Math.min(6, Math.floor(car.speed / 15) + 1).toString();
             } else if (car.speed < -0.1) {
@@ -833,8 +1320,25 @@
                 gameState.gear = 'N';
             }
             
-            // Update speed
-            gameState.speed = Math.abs(car.speed * 20);
+            // Animate wheels
+            animateWheels();
+        }
+
+        function animateWheels() {
+            const wheels = car.group.children.filter(child => 
+                child.geometry && child.geometry.type === 'CylinderGeometry'
+            );
+            
+            const wheelRotation = gameState.speed * 0.02;
+            
+            wheels.forEach((wheel, index) => {
+                wheel.rotation.x += wheelRotation;
+                
+                // Steering for front wheels
+                if (index < 2) {
+                    wheel.rotation.y = Math.sin(car.rotation) * 0.5;
+                }
+            });
         }
 
         function updateCamera() {
@@ -845,9 +1349,9 @@
             switch (cameraMode) {
                 case 0: // Chase camera
                     const chaseOffset = new THREE.Vector3(
-                        Math.sin(car.group.rotation.y) * 8,
+                        Math.sin(car.group.rotation.y) * 10,
                         5,
-                        Math.cos(car.group.rotation.y) * 8
+                        Math.cos(car.group.rotation.y) * 10
                     );
                     camera.position.lerp(carPos.clone().add(chaseOffset), 0.1);
                     camera.lookAt(carPos);
@@ -863,22 +1367,96 @@
                     camera.rotation.copy(car.group.rotation);
                     break;
                     
-                case 2: // Orbit camera
+                case 2: // Orbit camera with AI focus
                     const orbitRadius = 15;
                     const time = Date.now() * 0.001;
-                    camera.position.set(
-                        carPos.x + Math.cos(time) * orbitRadius,
-                        carPos.y + 10,
-                        carPos.z + Math.sin(time) * orbitRadius
+                    const focusPoint = new THREE.Vector3(
+                        carPos.x + (lastAIPrediction ? lastAIPrediction.look_ahead_x || 0 : 0),
+                        carPos.y + 5,
+                        carPos.z + (lastAIPrediction ? lastAIPrediction.look_ahead_z || 0 : 0)
                     );
-                    camera.lookAt(carPos);
+                    camera.position.set(
+                        focusPoint.x + Math.cos(time) * orbitRadius,
+                        focusPoint.y + 10,
+                        focusPoint.z + Math.sin(time) * orbitRadius
+                    );
+                    camera.lookAt(focusPoint);
                     break;
             }
         }
 
+        function sendDataToPythonBackend() {
+            if (!pythonBackendConnected || !socket || !car) return;
+            
+            const gameData = {
+                timestamp: Date.now(),
+                player_position: gameState.playerPosition,
+                speed: gameState.speed,
+                rotation: car.rotation,
+                car_type: car.type,
+                ai_mode: aiMode,
+                keys: Object.keys(keys).filter(k => keys[k]),
+                frame_time: 16 // Approximate
+            };
+            
+            socket.emit('game_data', gameData);
+            gameState.pythonBackend.requests++;
+        }
+
         function updateUI() {
+            // Speed and gear
             document.getElementById('currentSpeed').textContent = Math.round(gameState.speed);
             document.getElementById('currentGear').textContent = gameState.gear;
+            
+            // AI control status
+            document.getElementById('aiControlStatus').textContent = 
+                aiMode === 'full' ? 'FULL CONTROL' : 
+                aiMode === 'assisted' ? 'ASSISTED' : 'MANUAL';
+                
+            // AI score
+            const aiScore = calculateAIScore();
+            document.getElementById('aiScore').textContent = `${aiScore}%`;
+        }
+
+        function updateAIStatusUI() {
+            document.getElementById('aiProcessingTime').textContent = 
+                `${gameState.aiData.processingTime.toFixed(1)}ms`;
+            document.getElementById('aiPathNodes').textContent = gameState.aiData.pathNodes;
+            document.getElementById('aiOptimization').textContent = 
+                `${gameState.aiData.optimization}%`;
+            document.getElementById('aiNeuralNet').textContent = 
+                gameState.aiData.neuralNetStatus.toUpperCase();
+        }
+
+        function updateBackendUI() {
+            document.getElementById('backendUptime').textContent = 
+                `${Math.round(gameState.pythonBackend.uptime)}s`;
+            document.getElementById('backendRequests').textContent = gameState.pythonBackend.requests;
+        }
+
+        function updateBackendStatus(status) {
+            const indicator = document.getElementById('backendStatusIndicator');
+            const connectionText = document.getElementById('backendConnection');
+            
+            if (status === 'connected') {
+                indicator.className = 'status-indicator connected';
+                connectionText.textContent = 'CONNECTED';
+                document.getElementById('backendStatusText').textContent = 'CONNECTED';
+            } else {
+                indicator.className = 'status-indicator';
+                connectionText.textContent = 'DISCONNECTED';
+                document.getElementById('backendStatusText').textContent = 'DISCONNECTED';
+            }
+        }
+
+        function calculateAIScore() {
+            // Calculate AI performance score based on various factors
+            const baseScore = 85;
+            const speedBonus = Math.min(gameState.speed / 2, 10);
+            const consistencyBonus = Math.min(gameState.pythonBackend.requests / 100, 5);
+            const aiBonus = gameState.aiData.optimization / 10;
+            
+            return Math.min(100, Math.round(baseScore + speedBonus + consistencyBonus + aiBonus));
         }
 
         // ============================
@@ -891,94 +1469,96 @@
             document.getElementById('carSelection').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             
+            // Request AI analysis for selected car
+            if (socket && pythonBackendConnected) {
+                socket.emit('car_selected', {
+                    car_type: type,
+                    ai_profile: carTypes[type].aiProfile
+                });
+            }
+            
             showNotification(`Selected ${type === 'street' ? 'Sports Coupe' : 
                 type === 'offroad' ? 'Off-Road SUV' : 'Hyper Car'}`, 2000);
+            showNotification('Python AI Engine Activated', 2000);
         }
 
         function togglePause() {
             gameRunning = !gameRunning;
-            document.getElementById('pauseMenu').style.display = 
-                gameRunning ? 'none' : 'flex';
+            showNotification(gameRunning ? 'Game Resumed' : 'Game Paused', 1500);
         }
 
         function toggleCamera() {
             cameraMode = (cameraMode + 1) % 3;
-            const modes = ['CHASE', 'HOOD', 'ORBIT'];
+            const modes = ['CHASE', 'HOOD', 'AI ORBIT'];
             showNotification(`Camera: ${modes[cameraMode]}`, 1500);
         }
 
-        function changeCar() {
-            togglePause();
-            document.getElementById('carSelection').style.display = 'flex';
-            document.getElementById('gameUI').style.display = 'none';
+        function toggleAIMode() {
+            const modes = ['manual', 'assisted', 'full'];
+            const currentIndex = modes.indexOf(aiMode);
+            aiMode = modes[(currentIndex + 1) % modes.length];
             
-            if (car) {
-                scene.remove(car.group);
-                car = null;
+            document.getElementById('aiModeText').textContent = aiMode.toUpperCase();
+            showNotification(`AI Mode: ${aiMode.toUpperCase()}`, 1500);
+            
+            // Notify backend
+            if (socket && pythonBackendConnected) {
+                socket.emit('ai_mode_changed', { mode: aiMode });
             }
         }
 
-        function quitToMenu() {
-            togglePause();
-            changeCar();
+        function toggleAIAssist() {
+            aiMode = aiMode === 'assisted' ? 'manual' : 'assisted';
+            document.getElementById('aiModeText').textContent = aiMode.toUpperCase();
+            showNotification(`AI Assist: ${aiMode === 'assisted' ? 'ON' : 'OFF'}`, 1500);
         }
 
-        function toggleDifficulty() {
-            const difficulties = ['EASY', 'NORMAL', 'HARD', 'EXPERT'];
-            const current = document.getElementById('difficultyText').textContent;
-            const index = difficulties.indexOf(current);
-            const next = difficulties[(index + 1) % difficulties.length];
-            
-            document.getElementById('difficultyText').textContent = next;
-            showNotification(`Difficulty: ${next}`, 1500);
+        function togglePythonBackend() {
+            if (!pythonBackendConnected) {
+                connectToPythonBackend();
+                showNotification('Reconnecting to Python Backend...', 1500);
+            } else {
+                showNotification('Python Backend Connected ✓', 1500);
+            }
         }
 
-        function toggleAssists() {
-            const assistsText = document.getElementById('assistsText');
-            const newState = assistsText.textContent === 'ON' ? 'OFF' : 'ON';
-            assistsText.textContent = newState;
-            showNotification(`Assists: ${newState}`, 1500);
+        function showPythonOutput() {
+            const outputDiv = document.getElementById('pythonOutput');
+            outputDiv.style.display = outputDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function togglePythonOutput() {
+            showPythonOutput();
+        }
+
+        function requestAIOptimization() {
+            if (socket && pythonBackendConnected && car) {
+                socket.emit('optimization_request', {
+                    car_position: gameState.playerPosition,
+                    car_type: car.type,
+                    current_speed: gameState.speed
+                });
+                showNotification('Requesting AI Optimization...', 1500);
+            } else {
+                showNotification('Python Backend Not Connected', 1500);
+            }
+        }
+
+        function addPythonOutput(text) {
+            const outputDiv = document.getElementById('pythonOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            outputDiv.innerHTML += `[${timestamp}] ${text}<br>`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
         function showNotification(text, duration = 2000) {
-            // Create notification element
             const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(15, 23, 42, 0.95);
-                color: white;
-                padding: 20px 40px;
-                border-radius: 12px;
-                border-left: 4px solid #4cc9f0;
-                backdrop-filter: blur(10px);
-                z-index: 2000;
-                font-size: 18px;
-                font-weight: 600;
-                animation: fadeInOut 0.3s ease;
-            `;
-            
-            // Add keyframes for animation
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeInOut {
-                    0% { opacity: 0; transform: translate(-50%, -40%); }
-                    15% { opacity: 1; transform: translate(-50%, -50%); }
-                    85% { opacity: 1; transform: translate(-50%, -50%); }
-                    100% { opacity: 0; transform: translate(-50%, -60%); }
-                }
-            `;
-            document.head.appendChild(style);
-            
+            notification.className = 'notification';
             notification.textContent = text;
             document.getElementById('gameContainer').appendChild(notification);
             
-            // Remove notification after duration
             setTimeout(() => {
                 notification.remove();
-                style.remove();
             }, duration);
         }
 
