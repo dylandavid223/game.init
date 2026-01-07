@@ -1,188 +1,232 @@
 import numpy as np
 import math
 import random
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import json
+from collections import deque
+from dataclasses import dataclass
+from enum import Enum
 
-class Vector3:
-    """Simple 3D vector class."""
+class WeatherType(Enum):
+    CLEAR = "clear"
+    CLOUDY = "cloudy"
+    RAINY = "rainy"
+    STORMY = "stormy"
+    SNOWY = "snowy"
+    FOGGY = "foggy"
+
+@dataclass
+class QualitySettings:
+    """Graphics quality settings."""
+    texture_quality: str = "high"
+    shadow_quality: str = "high"
+    water_quality: str = "high"
+    particle_count: int = 200
+    post_effects: List[str] = None
+    anti_aliasing: str = "msaa4x"
+    anisotropic_filtering: int = 16
+    render_distance: float = 1000.0
+    
+    def __post_init__(self):
+        if self.post_effects is None:
+            self.post_effects = ["bloom", "color_grading", "ssao", "motion_blur"]
+
+class AdvancedVector3(Vector3):
+    """Enhanced 3D vector with more operations."""
     
     def __init__(self, x=0, y=0, z=0):
-        self.x = x
-        self.y = y
-        self.z = z
+        super().__init__(x, y, z)
     
-    def __add__(self, other):
-        return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
+    def reflect(self, normal):
+        """Calculate reflection vector."""
+        return self - normal * (2 * self.dot(normal))
     
-    def __sub__(self, other):
-        return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
-    
-    def __mul__(self, scalar):
-        return Vector3(self.x * scalar, self.y * scalar, self.z * scalar)
-    
-    def dot(self, other):
-        return self.x * other.x + self.y * other.y + self.z * other.z
-    
-    def cross(self, other):
-        return Vector3(
-            self.y * other.z - self.z * other.y,
-            self.z * other.x - self.x * other.z,
-            self.x * other.y - self.y * other.x
+    def lerp(self, other, t):
+        """Linear interpolation."""
+        return AdvancedVector3(
+            self.x + (other.x - self.x) * t,
+            self.y + (other.y - self.y) * t,
+            self.z + (other.z - self.z) * t
         )
     
-    def length(self):
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
-    
-    def normalize(self):
-        length = self.length()
-        if length > 0:
-            return Vector3(self.x/length, self.y/length, self.z/length)
-        return Vector3(0, 0, 0)
-    
-    def to_dict(self):
-        return {'x': self.x, 'y': self.y, 'z': self.z}
-    
-    @classmethod
-    def from_dict(cls, data):
-        return cls(data.get('x', 0), data.get('y', 0), data.get('z', 0))
+    def rotate(self, axis, angle):
+        """Rotate vector around axis."""
+        axis = axis.normalize()
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        
+        # Rodrigues' rotation formula
+        dot = self.dot(axis)
+        cross = self.cross(axis)
+        
+        return self * cos_a + cross * sin_a + axis * dot * (1 - cos_a)
 
-class TerrainGenerator:
-    """Generates and manages terrain data."""
+class AdvancedTerrainGenerator(TerrainGenerator):
+    """Enhanced terrain generator with more features."""
     
-    def __init__(self, size=1000, resolution=512):
-        self.size = size
-        self.resolution = resolution
-        self.height_map = None
-        self.normal_map = None
-        self.texture_map = None
-        
-        self.generate_terrain()
-        self.calculate_normals()
-        self.generate_texture_map()
+    def __init__(self, size=1000, resolution=1024):
+        super().__init__(size, resolution)
+        self.biome_map = None
+        self.water_level = 20.0
+        self.generate_biomes()
+        self.generate_rivers()
+        self.generate_vegetation()
     
-    def generate_terrain(self):
-        """Generate terrain using Perlin-like noise."""
-        print("Generating terrain...")
+    def generate_biomes(self):
+        """Generate different biomes based on height and moisture."""
+        print("Generating biomes...")
         
-        # Initialize height map
-        self.height_map = np.zeros((self.resolution, self.resolution))
+        self.biome_map = np.zeros((self.resolution, self.resolution, 3))
         
-        # Generate multiple octaves of noise
-        for octave in range(4):
-            frequency = 2 ** octave
-            amplitude = 1.0 / (frequency * 2)
+        # Generate moisture map
+        moisture = np.zeros((self.resolution, self.resolution))
+        for octave in range(3):
+            frequency = 3 ** octave
+            amplitude = 1.0 / (frequency * 1.5)
             
             for i in range(self.resolution):
                 for j in range(self.resolution):
-                    # Simplex-like noise
+                    nx = i / self.resolution * frequency
+                    ny = j / self.resolution * frequency
+                    noise = (math.sin(nx * 7.483 + ny * 34.156) * 19873.482) % 1
+                    moisture[i][j] += noise * amplitude
+        
+        # Assign biomes based on height and moisture
+        for i in range(self.resolution):
+            for j in range(self.resolution):
+                height = self.height_map[i][j]
+                moist = moisture[i][j]
+                
+                if height < 10:
+                    # Water
+                    self.biome_map[i][j] = [0.2, 0.4, 0.8]
+                elif height < 30:
+                    if moist > 0.6:
+                        # Swamp
+                        self.biome_map[i][j] = [0.3, 0.5, 0.2]
+                    else:
+                        # Grassland
+                        self.biome_map[i][j] = [0.4, 0.7, 0.3]
+                elif height < 60:
+                    if moist > 0.7:
+                        # Forest
+                        self.biome_map[i][j] = [0.2, 0.6, 0.2]
+                    else:
+                        # Plains
+                        self.biome_map[i][j] = [0.6, 0.8, 0.4]
+                else:
+                    if moist > 0.8:
+                        # Alpine
+                        self.biome_map[i][j] = [0.8, 0.9, 1.0]
+                    else:
+                        # Mountain
+                        self.biome_map[i][j] = [0.7, 0.6, 0.5]
+    
+    def generate_rivers(self):
+        """Generate river networks."""
+        print("Generating rivers...")
+        
+        # Simple river generation algorithm
+        river_height = np.copy(self.height_map)
+        
+        # Find high points that could be river sources
+        sources = []
+        for i in range(10, self.resolution - 10, 20):
+            for j in range(10, self.resolution - 10, 20):
+                if self.height_map[i][j] > 50:  # High enough for rivers
+                    sources.append((i, j))
+        
+        # Generate rivers from sources
+        for source in sources[:5]:  # Limit number of rivers
+            x, y = source
+            path = []
+            
+            # Flow downhill
+            for _ in range(100):
+                if x <= 1 or x >= self.resolution - 2 or y <= 1 or y >= self.resolution - 2:
+                    break
+                
+                path.append((x, y))
+                
+                # Find lowest neighbor
+                min_height = self.height_map[x][y]
+                next_x, next_y = x, y
+                
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx == 0 and dy == 0:
+                            continue
+                        
+                        nx, ny = x + dx, y + dy
+                        if self.height_map[nx][ny] < min_height:
+                            min_height = self.height_map[nx][ny]
+                            next_x, next_y = nx, ny
+                
+                if next_x == x and next_y == y:
+                    break
+                
+                x, y = next_x, next_y
+                
+                # Lower height to create riverbed
+                self.height_map[x][y] -= 5.0
+        
+        self.recalculate_normals()
+    
+    def generate_vegetation(self):
+        """Generate vegetation density map."""
+        print("Generating vegetation...")
+        
+        self.vegetation_map = np.zeros((self.resolution, self.resolution))
+        
+        for i in range(self.resolution):
+            for j in range(self.resolution):
+                height = self.height_map[i][j]
+                biome = self.biome_map[i][j]
+                
+                # Vegetation based on biome and height
+                if height < 10:  # Water
+                    density = 0.0
+                elif biome[1] > 0.5:  # Green areas
+                    if height < 40:
+                        density = random.uniform(0.7, 1.0)
+                    else:
+                        density = random.uniform(0.3, 0.6)
+                else:
+                    density = random.uniform(0.1, 0.3)
+                
+                self.vegetation_map[i][j] = density
+    
+    def recalculate_normals(self):
+        """Recalculate normals after terrain modification."""
+        super().calculate_normals()
+    
+    def add_detail_noise(self):
+        """Add high-frequency detail noise."""
+        print("Adding detail noise...")
+        
+        detail_map = np.zeros((self.resolution, self.resolution))
+        
+        for octave in range(5):
+            frequency = 8 ** octave
+            amplitude = 1.0 / (frequency * 3)
+            
+            for i in range(self.resolution):
+                for j in range(self.resolution):
                     nx = i / self.resolution * frequency
                     ny = j / self.resolution * frequency
                     
-                    # Simple pseudo-random noise
-                    noise = (math.sin(nx * 12.9898 + ny * 78.233) * 43758.5453) % 1
-                    self.height_map[i][j] += noise * amplitude
+                    noise1 = math.sin(nx * 32.145 + ny * 17.483) * 43758.5453
+                    noise2 = math.cos(nx * 21.789 + ny * 46.123) * 28745.982
+                    noise = ((noise1 + noise2) % 1 - 0.5) * 2
+                    
+                    detail_map[i][j] += noise * amplitude
         
-        # Add mountains and valleys
-        self.add_features()
-        
-        # Normalize height map
-        min_height = np.min(self.height_map)
-        max_height = np.max(self.height_map)
-        if max_height > min_height:
-            self.height_map = (self.height_map - min_height) / (max_height - min_height)
-        
-        # Scale to desired height range
-        self.height_map = self.height_map * 100  # 0-100 units height
+        # Apply detail noise
+        self.height_map += detail_map * 2
     
-    def add_features(self):
-        """Add terrain features like mountains and valleys."""
-        center_x, center_y = self.resolution // 2, self.resolution // 2
-        
-        # Add central mountain
-        for i in range(self.resolution):
-            for j in range(self.resolution):
-                dx = (i - center_x) / self.resolution
-                dy = (j - center_y) / self.resolution
-                distance = math.sqrt(dx*dx + dy*dy)
-                
-                # Mountain in center
-                if distance < 0.2:
-                    height = 1.0 - (distance / 0.2) * 0.5
-                    self.height_map[i][j] += height * 0.5
-                
-                # Valley around mountain
-                elif distance < 0.3:
-                    height = (distance - 0.2) / 0.1 * 0.3
-                    self.height_map[i][j] += height
-    
-    def calculate_normals(self):
-        """Calculate surface normals for lighting."""
-        print("Calculating terrain normals...")
-        
-        self.normal_map = np.zeros((self.resolution, self.resolution, 3))
-        
-        for i in range(1, self.resolution - 1):
-            for j in range(1, self.resolution - 1):
-                # Get heights of neighboring points
-                h_left = self.height_map[i-1][j]
-                h_right = self.height_map[i+1][j]
-                h_up = self.height_map[i][j-1]
-                h_down = self.height_map[i][j+1]
-                
-                # Calculate gradient
-                dx = (h_right - h_left) / 2
-                dy = (h_down - h_up) / 2
-                
-                # Normal vector (pointing up)
-                normal = Vector3(-dx, 1, -dy)
-                normal = normal.normalize()
-                
-                self.normal_map[i][j] = [normal.x, normal.y, normal.z]
-        
-        # Fill borders with nearest normals
-        self.normal_map[0] = self.normal_map[1]
-        self.normal_map[-1] = self.normal_map[-2]
-        self.normal_map[:, 0] = self.normal_map[:, 1]
-        self.normal_map[:, -1] = self.normal_map[:, -2]
-    
-    def generate_texture_map(self):
-        """Generate texture coordinates based on terrain features."""
-        print("Generating texture map...")
-        
-        self.texture_map = np.zeros((self.resolution, self.resolution, 2))
-        
-        for i in range(self.resolution):
-            for j in range(self.resolution):
-                # Simple UV coordinates
-                self.texture_map[i][j] = [i / self.resolution, j / self.resolution]
-    
-    def get_height(self, x, z):
-        """Get terrain height at world coordinates."""
-        # Convert world coordinates to height map indices
-        i = int((x / self.size + 0.5) * self.resolution)
-        j = int((z / self.size + 0.5) * self.resolution)
-        
-        # Clamp indices
-        i = max(0, min(self.resolution - 1, i))
-        j = max(0, min(self.resolution - 1, j))
-        
-        return float(self.height_map[i][j])
-    
-    def get_normal(self, x, z):
-        """Get surface normal at world coordinates."""
-        i = int((x / self.size + 0.5) * self.resolution)
-        j = int((z / self.size + 0.5) * self.resolution)
-        
-        i = max(0, min(self.resolution - 1, i))
-        j = max(0, min(self.resolution - 1, j))
-        
-        normal_data = self.normal_map[i][j]
-        return Vector3(normal_data[0], normal_data[1], normal_data[2])
-    
-    def get_terrain_data(self, bounds=None):
-        """Get terrain data for rendering."""
+    def generate_terrain_data(self, bounds=None, lod_level='high'):
+        """Generate terrain data with LOD support."""
         if bounds is None:
             bounds = {
                 'min_x': -self.size/2,
@@ -191,19 +235,28 @@ class TerrainGenerator:
                 'max_z': self.size/2
             }
         
-        # Calculate sampling resolution
-        samples_x = 100
-        samples_z = 100
+        # Determine sample density based on LOD
+        if lod_level == 'high':
+            samples_x = 200
+            samples_z = 200
+        elif lod_level == 'medium':
+            samples_x = 100
+            samples_z = 100
+        else:  # low
+            samples_x = 50
+            samples_z = 50
         
         terrain_data = {
             'vertices': [],
             'normals': [],
             'textures': [],
+            'colors': [],  # Biome colors
             'indices': [],
-            'bounds': bounds
+            'bounds': bounds,
+            'lod': lod_level
         }
         
-        # Generate grid of vertices
+        # Generate grid
         for i in range(samples_x):
             for j in range(samples_z):
                 x = bounds['min_x'] + (bounds['max_x'] - bounds['min_x']) * i / (samples_x - 1)
@@ -215,15 +268,17 @@ class TerrainGenerator:
                 normal = self.get_normal(x, z)
                 terrain_data['normals'].append([normal.x, normal.y, normal.z])
                 
-                # Texture coordinates
-                u = (x - bounds['min_x']) / (bounds['max_x'] - bounds['min_x'])
-                v = (z - bounds['min_z']) / (bounds['max_z'] - bounds['min_z'])
+                # Get biome color
+                terrain_data['colors'].append(self.get_biome_color(x, z))
+                
+                # Texture coordinates with detail tiling
+                u = (x - bounds['min_x']) / (bounds['max_x'] - bounds['min_x']) * 10
+                v = (z - bounds['min_z']) / (bounds['max_z'] - bounds['min_z']) * 10
                 terrain_data['textures'].append([u, v])
         
-        # Generate triangle indices
+        # Generate indices
         for i in range(samples_x - 1):
             for j in range(samples_z - 1):
-                # Two triangles per quad
                 a = i * samples_z + j
                 b = (i + 1) * samples_z + j
                 c = i * samples_z + (j + 1)
@@ -232,177 +287,266 @@ class TerrainGenerator:
                 terrain_data['indices'].extend([a, b, c, b, d, c])
         
         return terrain_data
+    
+    def get_biome_color(self, x, z):
+        """Get biome color at world coordinates."""
+        i = int((x / self.size + 0.5) * self.resolution)
+        j = int((z / self.size + 0.5) * self.resolution)
+        
+        i = max(0, min(self.resolution - 1, i))
+        j = max(0, min(self.resolution - 1, j))
+        
+        return list(self.biome_map[i][j])
 
-class GraphicsProcessor:
-    """Processes graphics and visual effects."""
+class WaterRenderer:
+    """Advanced water rendering system."""
+    
+    def __init__(self, terrain_generator):
+        self.terrain = terrain_generator
+        self.water_level = terrain_generator.water_level
+        self.wave_speed = 0.5
+        self.wave_amplitude = 0.3
+        self.water_color = [0.2, 0.5, 0.8, 0.7]
+        self.refraction_strength = 0.1
+        self.reflection_strength = 0.8
+        
+        # Generate water mesh
+        self.generate_water_mesh()
+    
+    def generate_water_mesh(self):
+        """Generate water surface mesh."""
+        self.water_vertices = []
+        self.water_normals = []
+        self.water_indices = []
+        
+        grid_size = 50
+        grid_spacing = self.terrain.size / grid_size
+        
+        # Create grid
+        for i in range(grid_size + 1):
+            for j in range(grid_size + 1):
+                x = -self.terrain.size/2 + i * grid_spacing
+                z = -self.terrain.size/2 + j * grid_spacing
+                
+                # Basic wave function
+                time = datetime.now().timestamp() * self.wave_speed
+                wave = math.sin(x * 0.1 + time) * math.cos(z * 0.1 + time) * self.wave_amplitude
+                
+                y = self.water_level + wave
+                
+                self.water_vertices.append([x, y, z])
+                
+                # Calculate normal for waves
+                dx = math.cos(x * 0.1 + time) * math.cos(z * 0.1 + time) * 0.1
+                dz = math.sin(x * 0.1 + time) * -math.sin(z * 0.1 + time) * 0.1
+                normal = AdvancedVector3(-dx, 1, -dz).normalize()
+                self.water_normals.append([normal.x, normal.y, normal.z])
+        
+        # Create indices
+        for i in range(grid_size):
+            for j in range(grid_size):
+                a = i * (grid_size + 1) + j
+                b = (i + 1) * (grid_size + 1) + j
+                c = i * (grid_size + 1) + (j + 1)
+                d = (i + 1) * (grid_size + 1) + (j + 1)
+                
+                self.water_indices.extend([a, b, c, b, d, c])
+    
+    def update(self, delta_time):
+        """Update water animation."""
+        # Update wave animation
+        pass  # Animation is time-based in generate_water_mesh
+    
+    def get_water_data(self):
+        """Get water rendering data."""
+        # Regenerate mesh with updated time
+        self.generate_water_mesh()
+        
+        return {
+            'vertices': self.water_vertices,
+            'normals': self.water_normals,
+            'indices': self.water_indices,
+            'color': self.water_color,
+            'refraction_strength': self.refraction_strength,
+            'reflection_strength': self.reflection_strength,
+            'wave_amplitude': self.wave_amplitude
+        }
+
+class AdvancedGraphicsProcessor(GraphicsProcessor):
+    """Enhanced graphics processor with more features."""
     
     def __init__(self):
-        self.terrain_generator = TerrainGenerator()
-        self.light_sources = []
-        self.particle_systems = []
-        self.post_effects = []
-        self.frame_counter = 0
+        super().__init__()
         
-        # Initialize lighting
-        self.setup_lighting()
+        # Replace with advanced terrain
+        self.terrain_generator = AdvancedTerrainGenerator(size=2000, resolution=2048)
         
-        # Initialize post-processing effects
-        self.setup_post_effects()
-    
-    def setup_lighting(self):
-        """Setup lighting system."""
-        # Main directional light (sun)
-        sun_light = {
-            'type': 'directional',
-            'direction': Vector3(-1, -1, -1).normalize(),
-            'color': [1.0, 1.0, 0.9],
-            'intensity': 1.0,
-            'casts_shadows': True
+        # Add new systems
+        self.water_renderer = WaterRenderer(self.terrain_generator)
+        self.quality_settings = QualitySettings()
+        self.shadow_map = None
+        self.ssao_map = None
+        self.reflection_map = None
+        self.frame_history = deque(maxlen=60)
+        
+        # Initialize advanced features
+        self.setup_shadows()
+        self.setup_ssao()
+        self.setup_reflections()
+        
+        # Performance monitoring
+        self.performance_stats = {
+            'fps': 60,
+            'gpu_memory': 0,
+            'cpu_time': 0,
+            'gpu_time': 0,
+            'triangle_count': 0
         }
-        
-        # Ambient light
-        ambient_light = {
-            'type': 'ambient',
-            'color': [0.3, 0.4, 0.5],
-            'intensity': 0.3
-        }
-        
-        self.light_sources = [sun_light, ambient_light]
     
-    def setup_post_effects(self):
-        """Setup post-processing effects."""
-        self.post_effects = [
-            {
-                'name': 'bloom',
-                'enabled': True,
-                'strength': 0.5,
-                'radius': 0.8,
-                'threshold': 0.7
-            },
-            {
-                'name': 'motion_blur',
-                'enabled': True,
-                'strength': 0.3,
-                'samples': 8
-            },
-            {
-                'name': 'color_grading',
-                'enabled': True,
-                'contrast': 1.1,
-                'saturation': 1.2,
-                'brightness': 1.0
-            },
-            {
-                'name': 'vignette',
-                'enabled': True,
-                'strength': 0.3,
-                'roundness': 0.8
-            }
-        ]
+    def setup_shadows(self):
+        """Setup shadow mapping system."""
+        self.shadow_map = {
+            'resolution': 4096,
+            'bias': 0.001,
+            'softness': 0.5,
+            'cascades': 4,
+            'max_distance': 1000
+        }
+    
+    def setup_ssao(self):
+        """Setup Screen Space Ambient Occlusion."""
+        self.ssao_map = {
+            'radius': 0.5,
+            'strength': 1.0,
+            'samples': 16,
+            'noise_size': 4
+        }
+    
+    def setup_reflections(self):
+        """Setup reflection/refraction system."""
+        self.reflection_map = {
+            'resolution': 1024,
+            'fresnel_power': 5.0,
+            'reflection_blur': 0.5,
+            'refraction_blur': 0.3
+        }
     
     def process_frame(self, frame_data):
-        """Process a frame of graphics data."""
+        """Process a frame with advanced features."""
         start_time = datetime.now()
         self.frame_counter += 1
         
         # Extract data
-        player_pos = Vector3.from_dict(frame_data.get('player_position', {}))
-        camera_pos = Vector3.from_dict(frame_data.get('camera_position', {}))
+        player_pos = AdvancedVector3.from_dict(frame_data.get('player_position', {}))
+        camera_pos = AdvancedVector3.from_dict(frame_data.get('camera_position', {}))
+        camera_rotation = frame_data.get('camera_rotation', {'x': 0, 'y': 0, 'z': 0})
         time_of_day = frame_data.get('time_of_day', 12.0)
         weather = frame_data.get('weather', 'clear')
+        delta_time = frame_data.get('delta_time', 0.016)
         
-        # Update lighting based on time of day
-        self.update_lighting(time_of_day, weather)
+        # Update systems
+        self.water_renderer.update(delta_time)
         
-        # Update post-processing effects
-        self.update_post_effects(frame_data)
+        # Update lighting with HDR support
+        self.update_hdr_lighting(time_of_day, weather)
         
-        # Generate terrain data for current view
+        # Calculate LOD based on distance and performance
+        lod_level = self.calculate_adaptive_lod(player_pos)
+        
+        # Generate terrain with LOD
         view_bounds = self.calculate_view_bounds(camera_pos)
-        terrain_data = self.terrain_generator.get_terrain_data(view_bounds)
+        terrain_data = self.terrain_generator.generate_terrain_data(view_bounds, lod_level)
         
-        # Generate particle effects
-        particle_data = self.generate_particles(player_pos, weather)
+        # Generate water data
+        water_data = self.water_renderer.get_water_data()
+        
+        # Generate advanced particle effects
+        particle_data = self.generate_advanced_particles(player_pos, weather, time_of_day)
+        
+        # Generate atmospheric effects
+        atmosphere_data = self.generate_atmospheric_effects(camera_pos, time_of_day)
+        
+        # Generate procedural vegetation
+        vegetation_data = self.generate_vegetation_data(view_bounds)
         
         # Calculate performance metrics
         processing_time = (datetime.now() - start_time).total_seconds() * 1000
         
-        # Prepare response
+        # Update performance stats
+        self.update_performance_stats(terrain_data, processing_time)
+        
+        # Prepare advanced response
         response = {
             'frame_number': self.frame_counter,
             'processing_time': processing_time,
             'terrain_data': terrain_data,
-            'lighting': self.get_lighting_data(),
-            'post_effects': self.post_effects,
+            'water_data': water_data,
+            'lighting': self.get_advanced_lighting_data(),
+            'post_effects': self.get_advanced_post_effects(),
             'particles': particle_data,
-            'weather_effects': self.get_weather_effects(weather),
+            'weather_effects': self.get_advanced_weather_effects(weather),
+            'atmosphere': atmosphere_data,
+            'vegetation': vegetation_data,
             'optimization': {
-                'lod_level': self.calculate_lod(player_pos),
+                'lod_level': lod_level,
                 'culling_applied': True,
-                'texture_quality': 'high',
-                'shadow_quality': 'soft',
-                'draw_calls': len(terrain_data.get('indices', [])) // 3
+                'occlusion_culling': True,
+                'frustum_culling': True,
+                'quality_settings': self.quality_settings.__dict__,
+                'triangle_count': len(terrain_data.get('indices', [])) // 3,
+                'draw_calls': self.calculate_draw_calls(terrain_data, vegetation_data)
             },
+            'shadows': self.shadow_map,
+            'ssao': self.ssao_map,
+            'reflections': self.reflection_map,
+            'performance': self.performance_stats,
             'timestamp': datetime.now().isoformat()
         }
         
+        # Store frame for motion blur
+        self.frame_history.append(response)
+        
         return response
     
-    def calculate_view_bounds(self, camera_pos):
-        """Calculate visible terrain bounds from camera position."""
-        view_distance = 500
-        bounds = {
-            'min_x': camera_pos.x - view_distance,
-            'max_x': camera_pos.x + view_distance,
-            'min_z': camera_pos.z - view_distance,
-            'max_z': camera_pos.z + view_distance
-        }
+    def update_hdr_lighting(self, time_of_day, weather):
+        """Update HDR lighting with physical-based parameters."""
+        # Physical sun model
+        solar_altitude = (time_of_day - 12) * 15  # degrees
         
-        # Clamp to terrain bounds
-        terrain_size = self.terrain_generator.size / 2
-        bounds['min_x'] = max(-terrain_size, bounds['min_x'])
-        bounds['max_x'] = min(terrain_size, bounds['max_x'])
-        bounds['min_z'] = max(-terrain_size, bounds['min_z'])
-        bounds['max_z'] = min(terrain_size, bounds['max_z'])
+        # Convert to radians
+        sun_angle = math.radians(solar_altitude)
         
-        return bounds
-    
-    def update_lighting(self, time_of_day, weather):
-        """Update lighting based on time of day and weather."""
-        # Convert time of day to sun angle
-        sun_angle = (time_of_day - 6) / 12 * math.pi  # 6am = 0°, 6pm = π
-        
-        # Update sun direction
-        sun_direction = Vector3(
+        # Calculate sun position
+        sun_direction = AdvancedVector3(
+            math.cos(sun_angle),
             math.sin(sun_angle),
-            -math.cos(sun_angle),
-            0
+            0.2  # Small Z component for depth
         ).normalize()
         
-        # Update sun color based on time
-        if time_of_day < 6 or time_of_day > 18:  # Night
+        # Calculate sun color based on atmospheric scattering
+        if solar_altitude > 10:  # Day
+            sun_color = [1.0, 1.0, 0.95]
+            sun_intensity = 100000.0  # lux
+            exposure = 1.0
+        elif solar_altitude > 0:  # Morning/Evening
+            sun_color = [1.0, 0.8, 0.6]
+            sun_intensity = 30000.0
+            exposure = 0.8
+        else:  # Night
             sun_color = [0.1, 0.1, 0.3]
-            sun_intensity = 0.1
-        elif time_of_day < 8:  # Dawn
-            sun_color = [1.0, 0.6, 0.4]
-            sun_intensity = 0.5
-        elif time_of_day > 16:  # Dusk
-            sun_color = [1.0, 0.7, 0.5]
-            sun_intensity = 0.6
-        else:  # Day
-            sun_color = [1.0, 1.0, 0.9]
-            sun_intensity = 1.0
+            sun_intensity = 1000.0
+            exposure = 0.3
         
-        # Adjust for weather
+        # Apply weather effects
         if weather == 'rainy':
-            sun_intensity *= 0.4
-            sun_color = [s * 0.7 for s in sun_color]
+            sun_intensity *= 0.3
+            exposure *= 0.6
         elif weather == 'stormy':
-            sun_intensity *= 0.2
-            sun_color = [s * 0.5 for s in sun_color]
+            sun_intensity *= 0.1
+            exposure *= 0.4
         elif weather == 'cloudy':
-            sun_intensity *= 0.7
-            sun_color = [s * 0.8 for s in sun_color]
+            sun_intensity *= 0.6
+            exposure *= 0.7
         
         # Update sun light
         for light in self.light_sources:
@@ -410,44 +554,27 @@ class GraphicsProcessor:
                 light['direction'] = sun_direction.to_dict()
                 light['color'] = sun_color
                 light['intensity'] = sun_intensity
-    
-    def update_post_effects(self, frame_data):
-        """Update post-processing effects based on game state."""
-        speed = frame_data.get('speed', 0)
-        weather = frame_data.get('weather', 'clear')
+                light['exposure'] = exposure
         
-        # Adjust motion blur based on speed
-        for effect in self.post_effects:
-            if effect['name'] == 'motion_blur':
-                effect['strength'] = min(0.5, speed / 200 * 0.3)
-            
-            # Adjust bloom for weather
-            if effect['name'] == 'bloom' and weather == 'rainy':
-                effect['strength'] = 0.7
-                effect['threshold'] = 0.6
+        # Update ambient based on sun position
+        for light in self.light_sources:
+            if light['type'] == 'ambient':
+                ambient_intensity = max(0.1, math.sin(sun_angle + math.pi/2) * 0.3)
+                light['intensity'] = ambient_intensity
     
-    def generate_particles(self, player_pos, weather):
-        """Generate particle effects."""
+    def generate_advanced_particles(self, player_pos, weather, time_of_day):
+        """Generate advanced particle effects with physics."""
         particles = []
         
-        # Weather particles
-        if weather == 'rainy':
-            for _ in range(50):
-                particle = {
-                    'type': 'rain',
-                    'position': [
-                        player_pos.x + random.uniform(-50, 50),
-                        player_pos.y + random.uniform(10, 50),
-                        player_pos.z + random.uniform(-50, 50)
-                    ],
-                    'velocity': [0, -20, 0],
-                    'size': random.uniform(0.1, 0.3),
-                    'lifetime': 2.0
-                }
-                particles.append(particle)
-        
-        elif weather == 'stormy':
-            for _ in range(100):
+        # Weather particles with physics
+        if weather in ['rainy', 'stormy']:
+            rain_density = 100 if weather == 'rainy' else 200
+            
+            for _ in range(rain_density):
+                # Rain drops with size variation
+                size = random.uniform(0.1, 0.3)
+                speed = random.uniform(15, 25) if weather == 'rainy' else random.uniform(25, 40)
+                
                 particle = {
                     'type': 'rain',
                     'position': [
@@ -456,256 +583,630 @@ class GraphicsProcessor:
                         player_pos.z + random.uniform(-100, 100)
                     ],
                     'velocity': [
-                        random.uniform(-5, 5),
-                        -30,
-                        random.uniform(-5, 5)
+                        random.uniform(-3, 3) if weather == 'stormy' else 0,
+                        -speed,
+                        random.uniform(-3, 3) if weather == 'stormy' else 0
                     ],
-                    'size': random.uniform(0.2, 0.4),
-                    'lifetime': 1.5
+                    'size': size,
+                    'lifetime': random.uniform(1.5, 3.0),
+                    'color': [0.7, 0.8, 1.0, 0.8],
+                    'gravity': 30.0,
+                    'wind_effect': True
                 }
                 particles.append(particle)
         
-        # Dust/smoke particles from car
-        if random.random() < 0.3:
-            for _ in range(10):
+        # Snow particles
+        elif weather == 'snowy':
+            for _ in range(150):
+                particle = {
+                    'type': 'snow',
+                    'position': [
+                        player_pos.x + random.uniform(-150, 150),
+                        player_pos.y + random.uniform(50, 200),
+                        player_pos.z + random.uniform(-150, 150)
+                    ],
+                    'velocity': [
+                        random.uniform(-2, 2),
+                        random.uniform(-3, -1),
+                        random.uniform(-2, 2)
+                    ],
+                    'size': random.uniform(0.3, 0.8),
+                    'lifetime': random.uniform(5, 10),
+                    'color': [1.0, 1.0, 1.0, 0.9],
+                    'gravity': 5.0,
+                    'swirl': True
+                }
+                particles.append(particle)
+        
+        # Dust particles with wind
+        for _ in range(20):
+            if random.random() < 0.1:
                 particle = {
                     'type': 'dust',
                     'position': [
-                        player_pos.x + random.uniform(-2, 2),
-                        0.5,
-                        player_pos.z + random.uniform(-2, 2)
+                        player_pos.x + random.uniform(-5, 5),
+                        0.2,
+                        player_pos.z + random.uniform(-5, 5)
                     ],
                     'velocity': [
-                        random.uniform(-1, 1),
-                        random.uniform(0.5, 2),
-                        random.uniform(-1, 1)
+                        random.uniform(-0.5, 0.5),
+                        random.uniform(0.1, 0.5),
+                        random.uniform(-0.5, 0.5)
                     ],
-                    'size': random.uniform(0.5, 1.5),
-                    'lifetime': random.uniform(1, 3)
+                    'size': random.uniform(0.2, 1.0),
+                    'lifetime': random.uniform(2, 5),
+                    'color': [0.8, 0.7, 0.5, 0.3],
+                    'fade': True
+                }
+                particles.append(particle)
+        
+        # Fireflies at night
+        if time_of_day > 18 or time_of_day < 6:
+            for _ in range(30):
+                particle = {
+                    'type': 'firefly',
+                    'position': [
+                        player_pos.x + random.uniform(-20, 20),
+                        random.uniform(1, 3),
+                        player_pos.z + random.uniform(-20, 20)
+                    ],
+                    'velocity': [
+                        random.uniform(-0.1, 0.1),
+                        0,
+                        random.uniform(-0.1, 0.1)
+                    ],
+                    'size': random.uniform(0.1, 0.2),
+                    'lifetime': random.uniform(3, 6),
+                    'color': [1.0, 1.0, 0.5, 0.8],
+                    'pulse': True,
+                    'pulse_speed': random.uniform(2, 4)
                 }
                 particles.append(particle)
         
         return particles
     
-    def get_weather_effects(self, weather):
-        """Get weather-specific visual effects."""
+    def generate_atmospheric_effects(self, camera_pos, time_of_day):
+        """Generate atmospheric scattering and fog."""
+        # Rayleigh scattering simulation
+        sun_angle = (time_of_day - 12) / 12 * math.pi
+        
+        # Base atmospheric color
+        if time_of_day < 6 or time_of_day > 18:  # Night
+            sky_color = [0.05, 0.05, 0.15]
+            horizon_color = [0.1, 0.1, 0.3]
+        elif time_of_day < 8:  # Dawn
+            sky_color = [0.3, 0.2, 0.4]
+            horizon_color = [0.8, 0.5, 0.3]
+        elif time_of_day > 16:  # Dusk
+            sky_color = [0.2, 0.2, 0.4]
+            horizon_color = [0.9, 0.6, 0.4]
+        else:  # Day
+            sky_color = [0.5, 0.7, 1.0]
+            horizon_color = [0.8, 0.9, 1.0]
+        
+        # Volumetric fog
+        fog_density = 0.001 + (math.sin(time_of_day * math.pi / 12) * 0.002)
+        fog_height = 50.0
+        fog_falloff = 0.5
+        
+        return {
+            'sky_color': sky_color,
+            'horizon_color': horizon_color,
+            'sun_color': [1.0, 0.9, 0.8],
+            'moon_color': [0.8, 0.9, 1.0],
+            'star_intensity': max(0, (18 - time_of_day) / 6) if time_of_day > 18 else max(0, (6 - time_of_day) / 6),
+            'cloud_coverage': 0.3 + math.sin(time_of_day * 0.1) * 0.2,
+            'fog': {
+                'density': fog_density,
+                'color': horizon_color,
+                'height': fog_height,
+                'falloff': fog_falloff,
+                'scattering': 0.8
+            },
+            'god_rays': {
+                'enabled': True,
+                'intensity': 0.3,
+                'samples': 16,
+                'decay': 0.95
+            }
+        }
+    
+    def generate_vegetation_data(self, bounds):
+        """Generate procedural vegetation placement."""
+        vegetation = {
+            'trees': [],
+            'grass': [],
+            'rocks': [],
+            'flowers': []
+        }
+        
+        # Generate trees
+        tree_count = 100
+        for _ in range(tree_count):
+            x = random.uniform(bounds['min_x'], bounds['max_x'])
+            z = random.uniform(bounds['min_z'], bounds['max_z'])
+            y = self.terrain_generator.get_height(x, z)
+            
+            # Check if suitable for trees (not water, not too steep)
+            normal = self.terrain_generator.get_normal(x, z)
+            slope = 1.0 - normal.y  # 0 = flat, 1 = vertical
+            
+            if y > self.terrain_generator.water_level + 5 and slope < 0.5:
+                tree_type = random.choice(['oak', 'pine', 'birch'])
+                height = random.uniform(5, 15)
+                radius = random.uniform(0.5, 1.5)
+                
+                vegetation['trees'].append({
+                    'position': [x, y, z],
+                    'type': tree_type,
+                    'height': height,
+                    'radius': radius,
+                    'variation': random.uniform(0.8, 1.2)
+                })
+        
+        # Generate grass patches
+        grass_count = 500
+        for _ in range(grass_count):
+            x = random.uniform(bounds['min_x'], bounds['max_x'])
+            z = random.uniform(bounds['min_z'], bounds['max_z'])
+            y = self.terrain_generator.get_height(x, z)
+            
+            if y > self.terrain_generator.water_level + 2:
+                vegetation['grass'].append({
+                    'position': [x, y, z],
+                    'density': random.uniform(0.5, 1.0),
+                    'height': random.uniform(0.3, 1.0),
+                    'wind_effect': True
+                })
+        
+        return vegetation
+    
+    def calculate_adaptive_lod(self, player_pos):
+        """Calculate adaptive LOD based on distance and performance."""
+        distance = player_pos.length()
+        
+        # Base LOD on distance
+        if distance < 100:
+            base_lod = 'high'
+        elif distance < 300:
+            base_lod = 'medium'
+        else:
+            base_lod = 'low'
+        
+        # Adjust based on performance
+        if self.performance_stats['fps'] < 30:
+            # Downgrade LOD if performance is poor
+            if base_lod == 'high':
+                base_lod = 'medium'
+            elif base_lod == 'medium':
+                base_lod = 'low'
+        
+        return base_lod
+    
+    def calculate_draw_calls(self, terrain_data, vegetation_data):
+        """Calculate total draw calls for the frame."""
+        # Terrain draw calls
+        terrain_triangles = len(terrain_data.get('indices', [])) // 3
+        terrain_draw_calls = max(1, terrain_triangles // 1000)  # Batch triangles
+        
+        # Vegetation draw calls (instanced)
+        tree_draw_calls = len(vegetation_data.get('trees', [])) // 50  # Batch trees
+        grass_draw_calls = len(vegetation_data.get('grass', [])) // 100  # Batch grass
+        
+        # Particle draw calls
+        particle_draw_calls = 3  # One per particle system
+        
+        # Total draw calls
+        total = (terrain_draw_calls + tree_draw_calls + 
+                grass_draw_calls + particle_draw_calls + 5)  # +5 for water, sky, etc.
+        
+        return total
+    
+    def update_performance_stats(self, terrain_data, processing_time):
+        """Update performance statistics."""
+        triangle_count = len(terrain_data.get('indices', [])) // 3
+        
+        # Calculate FPS
+        if processing_time > 0:
+            current_fps = 1000 / processing_time
+            # Smooth FPS calculation
+            self.performance_stats['fps'] = self.performance_stats['fps'] * 0.9 + current_fps * 0.1
+        
+        self.performance_stats.update({
+            'triangle_count': triangle_count,
+            'cpu_time': processing_time,
+            'gpu_time': processing_time * 0.7,  # Estimate
+            'memory_usage_mb': triangle_count * 0.01 + 100  # Estimate
+        })
+    
+    def get_advanced_lighting_data(self):
+        """Get advanced lighting data with HDR support."""
+        return {
+            'lights': self.light_sources,
+            'ambient_occlusion': {
+                'enabled': True,
+                'radius': self.ssao_map['radius'],
+                'strength': self.ssao_map['strength']
+            },
+            'global_illumination': {
+                'enabled': True,
+                'bounces': 2,
+                'intensity': 0.5
+            },
+            'shadows': self.shadow_map,
+            'hdr': {
+                'enabled': True,
+                'exposure': 1.0,
+                'bloom_threshold': 0.8,
+                'bloom_strength': 0.5
+            },
+            'volumetric_lighting': {
+                'enabled': True,
+                'samples': 32,
+                'scattering': 0.8
+            }
+        }
+    
+    def get_advanced_post_effects(self):
+        """Get advanced post-processing effects."""
+        return [
+            {
+                'name': 'bloom',
+                'enabled': True,
+                'strength': 0.5,
+                'radius': 0.8,
+                'threshold': 0.7,
+                'high_quality': True
+            },
+            {
+                'name': 'motion_blur',
+                'enabled': True,
+                'strength': 0.3,
+                'samples': 16,
+                'velocity_scale': 1.0
+            },
+            {
+                'name': 'color_grading',
+                'enabled': True,
+                'lut_texture': 'filmic',
+                'temperature': 6500,
+                'tint': 0.0,
+                'contrast': 1.1,
+                'saturation': 1.2,
+                'brightness': 1.0
+            },
+            {
+                'name': 'vignette',
+                'enabled': True,
+                'strength': 0.3,
+                'roundness': 0.8,
+                'smoothness': 0.5
+            },
+            {
+                'name': 'chromatic_aberration',
+                'enabled': False,
+                'strength': 0.1,
+                'samples': 3
+            },
+            {
+                'name': 'film_grain',
+                'enabled': False,
+                'strength': 0.05,
+                'size': 1.0
+            },
+            {
+                'name': 'depth_of_field',
+                'enabled': True,
+                'focus_distance': 50.0,
+                'aperture': 2.8,
+                'focal_length': 50.0
+            }
+        ]
+    
+    def get_advanced_weather_effects(self, weather):
+        """Get advanced weather-specific visual effects."""
         effects = {
-            'fog_density': 0.001,
-            'fog_color': [0.8, 0.8, 0.9],
-            'cloud_cover': 0.3,
-            'precipitation': 0.0,
-            'wind_strength': 0.2
+            'fog': {
+                'density': 0.001,
+                'height': 50,
+                'falloff': 0.5,
+                'scattering': 0.8,
+                'color': [0.8, 0.8, 0.9]
+            },
+            'clouds': {
+                'coverage': 0.3,
+                'thickness': 0.5,
+                'speed': 0.5,
+                'shadow_intensity': 0.7
+            },
+            'precipitation': {
+                'intensity': 0.0,
+                'type': 'none',
+                'wind_influence': 0.0
+            },
+            'wind': {
+                'strength': 0.2,
+                'direction': [1, 0, 0],
+                'gustiness': 0.3
+            },
+            'wetness': {
+                'amount': 0.0,
+                'puddles': False,
+                'reflection_strength': 0.0
+            }
         }
         
         if weather == 'rainy':
             effects.update({
-                'fog_density': 0.003,
-                'fog_color': [0.6, 0.6, 0.7],
-                'cloud_cover': 0.9,
-                'precipitation': 0.8,
-                'wind_strength': 0.8
+                'fog': {
+                    'density': 0.003,
+                    'height': 30,
+                    'falloff': 0.7,
+                    'scattering': 0.9,
+                    'color': [0.6, 0.6, 0.7]
+                },
+                'clouds': {
+                    'coverage': 0.9,
+                    'thickness': 0.8,
+                    'speed': 1.0,
+                    'shadow_intensity': 0.9
+                },
+                'precipitation': {
+                    'intensity': 0.8,
+                    'type': 'rain',
+                    'wind_influence': 0.5
+                },
+                'wind': {
+                    'strength': 0.8,
+                    'direction': [1, 0, 0.5],
+                    'gustiness': 0.5
+                },
+                'wetness': {
+                    'amount': 0.8,
+                    'puddles': True,
+                    'reflection_strength': 0.6
+                }
             })
         elif weather == 'stormy':
             effects.update({
-                'fog_density': 0.005,
-                'fog_color': [0.4, 0.4, 0.5],
-                'cloud_cover': 1.0,
-                'precipitation': 1.0,
-                'wind_strength': 1.0
+                'fog': {
+                    'density': 0.005,
+                    'height': 20,
+                    'falloff': 0.8,
+                    'scattering': 1.0,
+                    'color': [0.4, 0.4, 0.5]
+                },
+                'clouds': {
+                    'coverage': 1.0,
+                    'thickness': 1.0,
+                    'speed': 2.0,
+                    'shadow_intensity': 1.0
+                },
+                'precipitation': {
+                    'intensity': 1.0,
+                    'type': 'heavy_rain',
+                    'wind_influence': 1.0
+                },
+                'wind': {
+                    'strength': 1.2,
+                    'direction': [random.uniform(-1, 1), 0, random.uniform(-1, 1)],
+                    'gustiness': 0.8
+                },
+                'wetness': {
+                    'amount': 1.0,
+                    'puddles': True,
+                    'reflection_strength': 0.8
+                },
+                'lightning': {
+                    'enabled': True,
+                    'frequency': 0.1,
+                    'intensity': 1.0
+                }
             })
-        elif weather == 'cloudy':
+        elif weather == 'snowy':
             effects.update({
-                'fog_density': 0.002,
-                'fog_color': [0.7, 0.7, 0.8],
-                'cloud_cover': 0.7,
-                'precipitation': 0.1,
-                'wind_strength': 0.5
+                'fog': {
+                    'density': 0.002,
+                    'height': 100,
+                    'falloff': 0.3,
+                    'scattering': 0.7,
+                    'color': [0.9, 0.9, 1.0]
+                },
+                'clouds': {
+                    'coverage': 0.8,
+                    'thickness': 0.6,
+                    'speed': 0.3,
+                    'shadow_intensity': 0.6
+                },
+                'precipitation': {
+                    'intensity': 0.6,
+                    'type': 'snow',
+                    'wind_influence': 0.3
+                },
+                'wind': {
+                    'strength': 0.4,
+                    'direction': [0.5, 0, 0.5],
+                    'gustiness': 0.2
+                },
+                'wetness': {
+                    'amount': 0.0,
+                    'puddles': False,
+                    'reflection_strength': 0.0
+                },
+                'snow_accumulation': {
+                    'enabled': True,
+                    'rate': 0.1,
+                    'max_depth': 0.5
+                }
             })
         
         return effects
     
-    def get_lighting_data(self):
-        """Get current lighting data for rendering."""
+    def apply_dynamic_resolution(self, target_fps=60):
+        """Apply dynamic resolution scaling to maintain target FPS."""
+        current_fps = self.performance_stats['fps']
+        
+        if current_fps < target_fps * 0.9:
+            # Reduce resolution
+            scale_factor = 0.9
+            print(f"Reducing resolution scale to {scale_factor}")
+        elif current_fps > target_fps * 1.1:
+            # Increase resolution
+            scale_factor = min(1.0, self.quality_settings.render_distance * 1.1)
+            print(f"Increasing resolution scale to {scale_factor}")
+        else:
+            scale_factor = 1.0
+        
         return {
-            'lights': self.light_sources,
-            'ambient_occlusion': True,
-            'global_illumination': True,
-            'shadow_map_size': 2048,
-            'shadow_softness': 0.8
+            'scale_factor': scale_factor,
+            'target_fps': target_fps,
+            'current_fps': current_fps
         }
     
-    def calculate_lod(self, player_pos):
-        """Calculate level of detail based on distance."""
-        distance = player_pos.length()
-        
-        if distance < 100:
-            return 'high'
-        elif distance < 300:
-            return 'medium'
-        else:
-            return 'low'
-    
-    def optimize_graphics(self, optimization_request):
-        """Optimize graphics settings based on performance."""
-        fps = optimization_request.get('fps', 60)
-        gpu_usage = optimization_request.get('gpu_usage', 50)
-        
-        adjustments = {}
-        
-        # Adjust quality based on performance
-        if fps < 30:
-            adjustments['texture_quality'] = 'medium'
-            adjustments['shadow_quality'] = 'low'
-            adjustments['particle_count'] = 50
-        elif fps < 45:
-            adjustments['shadow_quality'] = 'medium'
-            adjustments['particle_count'] = 100
-        else:
-            adjustments['texture_quality'] = 'high'
-            adjustments['shadow_quality'] = 'high'
-            adjustments['particle_count'] = 200
-        
-        # Adjust based on GPU usage
-        if gpu_usage > 80:
-            adjustments['post_effects'] = ['bloom', 'color_grading']  # Only essential effects
-        elif gpu_usage > 60:
-            adjustments['post_effects'] = ['bloom', 'color_grading', 'vignette']
-        else:
-            adjustments['post_effects'] = [effect['name'] for effect in self.post_effects]
-        
-        return adjustments
-    
-    def render_debug_info(self):
-        """Render debug information for development."""
+    def generate_debug_visualization(self):
+        """Generate debug visualization data."""
         return {
-            'terrain_triangles': self.frame_counter * 1000,
-            'particle_count': len(self.particle_systems) * 100,
-            'light_count': len(self.light_sources),
-            'memory_usage': 256,  # MB
-            'gpu_memory': 512,    # MB
-            'render_time': 16.7   # ms (60 FPS)
+            'wireframe': False,
+            'show_normals': False,
+            'show_bounding_boxes': True,
+            'show_frustum': True,
+            'show_light_sources': True,
+            'show_collision_volumes': False,
+            'performance_overlay': True,
+            'statistics': {
+                'frame_time': self.performance_stats['cpu_time'],
+                'fps': self.performance_stats['fps'],
+                'triangle_count': self.performance_stats['triangle_count'],
+                'draw_calls': 0,  # Would be calculated
+                'memory_usage': f"{self.performance_stats['memory_usage_mb']:.1f} MB",
+                'gpu_memory': "512 MB",
+                'vram_usage': "75%"
+            }
         }
 
-class WeatherSystem:
-    """Manages weather effects and transitions."""
+class GraphicsEngine:
+    """Main graphics engine class."""
     
     def __init__(self):
-        self.current_weather = 'clear'
-        self.target_weather = 'clear'
-        self.transition_progress = 0
-        self.transition_speed = 0.1
+        self.graphics_processor = AdvancedGraphicsProcessor()
+        self.weather_system = WeatherSystem ()
+        self.current_frame = 0
+        self.is_paused = False
+        self.debug_mode = False
         
-        self.weather_patterns = {
-            'clear': {'duration': 300, 'intensity': 0.1},
-            'cloudy': {'duration': 180, 'intensity': 0.3},
-            'rainy': {'duration': 120, 'intensity': 0.7},
-            'stormy': {'duration': 60, 'intensity': 1.0}
+        print("Advanced Graphics Engine initialized!")
+        print(f"Terrain size: {self.graphics_processor.terrain_generator.size}")
+        print(f"Resolution: {self.graphics_processor.terrain_generator.resolution}")
+    
+    def render_frame(self, game_state):
+        """Render a complete frame."""
+        if self.is_paused:
+            return self.get_last_frame()
+        
+        self.current_frame += 1
+        
+        # Update weather
+        self.weather_system.update(game_state.get('delta_time', 0.016))
+        weather_data = self.weather_system.get_weather_data()
+        
+        # Prepare frame data
+        frame_data = {
+            'player_position': game_state.get('player_position', {'x': 0, 'y': 0, 'z': 0}),
+            'camera_position': game_state.get('camera_position', {'x': 0, 'y': 15, 'z': 25}),
+            'camera_rotation': game_state.get('camera_rotation', {'x': -20, 'y': 0, 'z': 0}),
+            'time_of_day': game_state.get('time_of_day', 12.0),
+            'weather': weather_data['type'],
+            'speed': game_state.get('speed', 0),
+            'delta_time': game_state.get('delta_time', 0.016),
+            'performance_metrics': game_state.get('performance_metrics', {})
         }
         
-        self.next_weather_change = 0
-        self.update_next_change()
-    
-    def update(self, delta_time):
-        """Update weather system."""
-        # Update transition
-        if self.transition_progress < 1:
-            self.transition_progress = min(1, self.transition_progress + self.transition_speed * delta_time)
+        # Process frame
+        result = self.graphics_processor.process_frame(frame_data)
         
-        # Check for weather change
-        if self.next_weather_change <= 0:
-            self.change_weather()
-            self.update_next_change()
-        else:
-            self.next_weather_change -= delta_time
-    
-    def change_weather(self):
-        """Change to a new weather pattern."""
-        weather_types = list(self.weather_patterns.keys())
-        # Weighted random selection
-        weights = [0.4, 0.3, 0.2, 0.1]  # clear, cloudy, rainy, stormy
+        # Add weather data
+        result['weather_data'] = weather_data
         
-        self.target_weather = random.choices(weather_types, weights=weights, k=1)[0]
-        self.transition_progress = 0
+        # Add debug info if enabled
+        if self.debug_mode:
+            result['debug'] = self.graphics_processor.generate_debug_visualization()
         
-        print(f"Weather changing to: {self.target_weather}")
+        return result
     
-    def update_next_change(self):
-        """Update when next weather change will occur."""
-        current_pattern = self.weather_patterns.get(self.target_weather, self.weather_patterns['clear'])
-        self.next_weather_change = current_pattern['duration'] * random.uniform(0.8, 1.2)
-    
-    def get_weather_data(self):
-        """Get current weather data for rendering."""
-        # Interpolate between current and target weather
-        if self.transition_progress < 1:
-            # Blend weather effects during transition
-            current = self.weather_patterns[self.current_weather]
-            target = self.weather_patterns[self.target_weather]
-            
-            intensity = current['intensity'] * (1 - self.transition_progress) + target['intensity'] * self.transition_progress
-            
-            if self.transition_progress >= 1:
-                self.current_weather = self.target_weather
-        else:
-            intensity = self.weather_patterns[self.current_weather]['intensity']
-        
-        weather_data = {
-            'type': self.current_weather,
-            'intensity': intensity,
-            'in_transition': self.transition_progress < 1,
-            'transition_progress': self.transition_progress,
-            'next_change': self.next_weather_change
+    def get_last_frame(self):
+        """Get the last rendered frame (when paused)."""
+        return {
+            'frame_number': self.current_frame,
+            'paused': True,
+            'message': 'Graphics engine is paused'
         }
+    
+    def toggle_pause(self):
+        """Toggle pause state."""
+        self.is_paused = not self.is_paused
+        return self.is_paused
+    
+    def toggle_debug(self):
+        """Toggle debug mode."""
+        self.debug_mode = not self.debug_mode
+        self.graphics_processor.debug_mode = self.debug_mode
+        return self.debug_mode
+    
+    def set_graphics_settings(self, settings):
+        """Update graphics settings."""
+        for key, value in settings.items():
+            if hasattr(self.graphics_processor.quality_settings, key):
+                setattr(self.graphics_processor.quality_settings, key, value)
         
-        # Add weather-specific effects
-        if self.current_weather == 'rainy':
-            weather_data.update({
-                'rain_density': intensity,
-                'rain_direction': [0, -1, 0],
-                'puddle_amount': intensity * 0.8,
-                'wetness': intensity * 0.9
-            })
-        elif self.current_weather == 'stormy':
-            weather_data.update({
-                'rain_density': intensity,
-                'rain_direction': [random.uniform(-0.5, 0.5), -1, random.uniform(-0.5, 0.5)],
-                'puddle_amount': intensity,
-                'wetness': 1.0,
-                'lightning_chance': 0.1
-            })
-        elif self.current_weather == 'cloudy':
-            weather_data.update({
-                'cloud_density': intensity,
-                'cloud_speed': 0.5,
-                'shadow_intensity': 1.0 - intensity * 0.5
-            })
-        
-        return weather_data
+        return self.graphics_processor.quality_settings.__dict__
 
+# Test the enhanced graphics engine
 if __name__ == "__main__":
-    # Test the graphics engine
-    print("Testing Graphics Engine...")
+    print("Testing Advanced Graphics Engine...")
     
-    graphics = GraphicsProcessor()
-    weather = WeatherSystem()
+    engine = GraphicsEngine()
     
-    # Test frame processing
-    test_frame = {
-        'player_position': {'x': 0, 'y': 0, 'z': 0},
-        'camera_position': {'x': 0, 'y': 15, 'z': 25},
-        'time_of_day': 12.0,
-        'weather': 'clear',
-        'speed': 80
-    }
+    # Test different scenarios
+    test_scenarios = [
+        {
+            'name': 'Daytime Clear',
+            'player_position': {'x': 0, 'y': 0, 'z': 0},
+            'camera_position': {'x': 0, 'y': 20, 'z': 40},
+            'time_of_day': 14.0,
+            'speed': 60
+        },
+        {
+            'name': 'Evening Storm',
+            'player_position': {'x': 100, 'y': 0, 'z': -50},
+            'camera_position': {'x': 100, 'y': 25, 'z': -25},
+            'time_of_day': 19.0,
+            'weather': 'stormy',
+            'speed': 120
+        },
+        {
+            'name': 'Night Snow',
+            'player_position': {'x': -200, 'y': 0, 'z': 100},
+            'camera_position': {'x': -200, 'y': 30, 'z': 125},
+            'time_of_day': 22.0,
+            'weather': 'snowy',
+            'speed': 30
+        }
+    ]
     
-    result = graphics.process_frame(test_frame)
-    print(f"Graphics processing complete:")
-    print(f"- Frame: {result['frame_number']}")
-    print(f"- Processing time: {result['processing_time']:.2f}ms")
-    print(f"- Terrain vertices: {len(result['terrain_data']['vertices'])}")
-    print(f"- Draw calls: {result['optimization']['draw_calls']}")
+    for scenario in test_scenarios:
+        print(f"\nTesting: {scenario['name']}")
+        result = engine.render_frame(scenario)
+        
+        print(f"Frame: {result['frame_number']}")
+        print(f"Processing time: {result['processing_time']:.2f}ms")
+        print(f"Terrain triangles: {result['optimization']['triangle_count']}")
+        print(f"Draw calls: {result['optimization']['draw_calls']}")
+        print(f"Trees: {len(result['vegetation']['trees'])}")
+        print(f"Grass patches: {len(result['vegetation']['grass'])}")
+        
+        # Test dynamic resolution
+        if scenario['name'] == 'Evening Storm':
+            dyn_res = engine.graphics_processor.apply_dynamic_resolution()
+            print(f"Dynamic resolution: {dyn_res['scale_factor']:.2f}")
     
-    # Test weather system
-    weather.update(1.0)
-    weather_data = weather.get_weather_data()
-    print(f"\nWeather: {weather_data['type']} (intensity: {weather_data['intensity']:.2f})")
+    print("\nGraphics engine test complete!")
